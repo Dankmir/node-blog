@@ -1,4 +1,5 @@
 const express = require('express');
+const morgan = require('morgan');
 
 const app = express();
 
@@ -9,6 +10,27 @@ app.set('view engine', 'ejs');
 // app.set('views', 'path');
 
 app.listen(3000);
+
+// Middleware examples
+// app.use((req, res, next) => {
+//     console.log('New request made:');
+//     console.log('Host: ', req.hostname);
+//     console.log('Path: ', req.path);
+//     console.log('Method: ', req.method);
+//     next(); // Move to next handler
+// });
+
+// app.use((req, res, next) => {
+//     console.log('In the next middleware');
+//     next();
+// });
+
+// 3rd party middleware
+app.use(express.static('public'));
+app.use(morgan('dev'));
+
+// Static files
+
 
 app.get('/', (req, res) => {
     
@@ -35,7 +57,7 @@ app.get('/about-us', (req, res) => {
     res.redirect('/about');
 });
 
-// 404 page
+// 404 page middleware
 
 app.use((req, res) => {
     res.status(404).render('404', { title: '404' });
