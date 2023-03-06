@@ -1,7 +1,17 @@
 const express = require('express');
 const morgan = require('morgan');
-
+const mongoose = require('mongoose');
+const Blog = require('./models/blog');
 const app = express();
+
+// Connect to MongoDB
+const dbURI = 'mongodb+srv://Dankmir:PfDhGUxz8SYNXB67@nodeblog.tlkqgbu.mongodb.net/node-blog?retryWrites=true&w=majority';
+mongoose.connect(dbURI)
+    .then((result) =>
+    {
+        console.log('Connected to DB.');
+        app.listen(3000);
+    }).catch((err) => console.log(err));
 
 // Register view engine
 app.set('view engine', 'ejs');
@@ -9,7 +19,6 @@ app.set('view engine', 'ejs');
 // We can also set folder explicitly
 // app.set('views', 'path');
 
-app.listen(3000);
 
 // Middleware examples
 // app.use((req, res, next) => {
@@ -29,22 +38,46 @@ app.listen(3000);
 app.use(express.static('public'));
 app.use(morgan('dev'));
 
-// Static files
+// Mongoose and mongo sandbox routes
+app.get('/add-blog', (req, res) => {
+    const blog = new Blog({
+        title: 'New Blog 2',
+        snippet: 'About my new blog.',
+        body: 'More about my new blog.'
+    });
 
+    blog.save()
+        .then((result) => res.send(result))
+        .catch((err) => console.log(err));
+});
+
+app.get('/all-blogs', (req, res) => {
+    Blog.find()
+        .then((result) => res.send(result))
+        .catch((err) => console.log(err));
+});
+
+app.get('/single-blog', (req, res) => {
+    Blog.findById('640639fac73c1036265acc7e')
+        .then((result) => res.send(result))
+        .catch((err) => console.log(err));
+});
 
 app.get('/', (req, res) => {
-    
-    const blogs = [
-        { title: 'Yoshi finds eggs', snippet: 'Lorem Ipsum dolor sit amet consectetur' },
-        { title: 'Mario finds stars', snippet: 'Lorem Ipsum dolor sit amet consectetur' },
-        { title: 'How to defeat Bowser', snippet: 'Lorem Ipsum dolor sit amet consectetur' }
-    ];
-
-    res.render('index', { title: 'Home', blogs });
+    // res.render('index', { title: 'Home', blogs });
+    res.redirect('/blogs');
 });
 
 app.get('/about', (req, res) => {
     res.render('about', { title: 'About' });
+});
+
+// Blog routes
+app.get('/blogs', (req, res) => {
+    Blog.find().sort({ createdAt: -1 }) // -1 - descending
+        .then((result) => {
+            res.render('index', { title: 'All Blogs', blogs: result });
+        }).catch((err) => console.log(err));
 });
 
 app.get('/blogs/create', (req, res) => {
@@ -57,7 +90,7 @@ app.get('/about-us', (req, res) => {
     res.redirect('/about');
 });
 
-// 404 page middleware
+// 404 page middleware (always at the end)
 
 app.use((req, res) => {
     res.status(404).render('404', { title: '404' });
